@@ -6,4 +6,5 @@ class User < ApplicationRecord
     validates :role, presence: true
 
     has_many :admins
+    has_many :teachers
 end
