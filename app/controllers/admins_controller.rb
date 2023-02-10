@@ -12,8 +12,8 @@ class AdminsController < ApplicationController
       else 
         render json: { message: 'Invalid admin details' }, status: :not_acceptable
       end
-    else@user.errors.messages
-      render json: { message: @user.errors.messages }, status: :not_acceptable
+    else
+      render json: { errors: @user.errors }, status: :not_acceptable
     end
   end                          
 
