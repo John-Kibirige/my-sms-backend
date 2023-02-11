@@ -3,4 +3,5 @@ Rails.application.routes.draw do
   resources :admins, only: [:create]
   resources :teachers
   resources :parents
+  resources :students
 end

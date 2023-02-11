@@ -62,7 +62,7 @@ class TeachersController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def set_teacher
       begin
-      @teacher = Teacher.find(params[:id])
+        @teacher = Teacher.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render json: { message: 'Teacher not found' }, status: :not_found
     end
