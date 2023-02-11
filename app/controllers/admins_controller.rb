@@ -24,7 +24,7 @@ class AdminsController < ApplicationController
   end
 
   def combined_admin_user(admin, user)
-    admin.merge({user_name: user.user_name, password: user.password})
+    admin.as_json.merge({user_name: user.user_name, password: user.password})
   end
 
   def trim_params 

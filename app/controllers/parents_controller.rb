@@ -22,7 +22,7 @@ class ParentsController < ApplicationController
 
     if @user.save 
       @parent = Parent.new(trim_params(parent_params).merge({user_id: @user.id}))
-      
+
       if @parent.save 
         token = encode_token({ user_id: @user.id })
         render json: { parent: combined_parent_user(@parent, @user), token: token }, status: :created
@@ -43,7 +43,8 @@ class ParentsController < ApplicationController
 
     if @parent.update(trim_params(parent_params).merge({user_id: @user.id}))
       render json: combined_parent_user(@parent, @parent.user), status: :ok
-    else
+    else 
+      render json: {errors:  @parent.errors}, status: :unprocessable_entity
     end
   end
 

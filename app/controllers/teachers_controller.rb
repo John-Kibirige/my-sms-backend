@@ -21,7 +21,7 @@ class TeachersController < ApplicationController
     @user = User.new(user_name: teacher_params[:user_name], password: teacher_params[:password], role: 'teacher')
 
     if @user.save
-      @teacher = Teacher.new(trim_params(teacher_params).merge{user_id: @user.id})
+      @teacher = Teacher.new(trim_params(teacher_params).merge({user_id: @user.id}))
 
       if @teacher.save
         token = encode_token({ user_id: @user.id })
@@ -41,7 +41,7 @@ class TeachersController < ApplicationController
       @user.update_column(:user_name, teacher_params[:user_name])
     end
 
-    if @teacher.update(trim_params(teacher_params).merge{user_id: @user.id}) 
+    if @teacher.update(trim_params(teacher_params).merge({user_id: @user.id})) 
       render json: combined_teacher_user(@teacher, @teacher.user), status: :ok
     else 
       render json: @teacher.errors, status: :unprocessable_entity
@@ -64,6 +64,7 @@ class TeachersController < ApplicationController
         @teacher = Teacher.find(params[:id])
       rescue ActiveRecord::RecordNotFound
         render json: { message: 'Teacher not found' }, status: :not_found
+      end
     end
 
     # Only allow a list of trusted parameters through.
