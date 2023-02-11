@@ -41,7 +41,11 @@ class StreamsController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_stream
-      @stream = Stream.find(params[:id])
+      begin
+        @stream = Stream.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { message: 'Stream not found' }, status: :not_found
+      end
     end
 
     # Only allow a list of trusted parameters through.
