@@ -21,7 +21,7 @@ class TeachersController < ApplicationController
     @user = User.new(user_name: teacher_params[:user_name], password: teacher_params[:password], role: 'teacher')
 
     if @user.save
-      @teacher = Teacher.new(full_name: teacher_params[:full_name], sex: teacher_params[:sex], contact: teacher_params[:contact], email: teacher_params[:email], user_id: @user.id, physical_address: teacher_params[:physical_address], joining_date: teacher_params[:joining_date])
+      @teacher = Teacher.new(trim_params(teacher_params).merge{user_id: @user.id})
 
       if @teacher.save
         token = encode_token({ user_id: @user.id })
@@ -36,13 +36,12 @@ class TeachersController < ApplicationController
 
   # PATCH/PUT /teachers/1
   def update
-
     @user = User.find(@teacher.user_id)
     if @user.user_name != teacher_params[:user_name]
       @user.update_column(:user_name, teacher_params[:user_name])
     end
 
-    if @teacher.update(full_name: teacher_params[:full_name], sex: teacher_params[:sex], contact: teacher_params[:contact], email: teacher_params[:email], user_id: @user.id, physical_address: teacher_params[:physical_address], joining_date: teacher_params[:joining_date]) 
+    if @teacher.update(trim_params(teacher_params).merge{user_id: @user.id}) 
       render json: combined_teacher_user(@teacher, @teacher.user), status: :ok
     else 
       render json: @teacher.errors, status: :unprocessable_entity
@@ -51,7 +50,7 @@ class TeachersController < ApplicationController
 
   # DELETE /teachers/1
   def destroy
-    @user = User.find(@teacher.user_id)
+    @user = @teacher.user
     @teacher.destroy
     @user.destroy
 
@@ -74,5 +73,9 @@ class TeachersController < ApplicationController
 
     def combined_teacher_user(teacher, user)
       {user_name: user.user_name}.merge(teacher.as_json)
+    end
+
+    def trim_params(teacher_params)
+      teacher_params.except(:user_name, :password)
     end
 end
