@@ -21,8 +21,8 @@ class ParentsController < ApplicationController
     @user = User.new(user_name: parent_params[:user_name], password: parent_params[:password], role: 'parent')
 
     if @user.save 
-      @parent = Parent.new(full_name: parent_params[:full_name], contact: parent_params[:contact], physical_address: parent_params[:physical_address], number_of_students: parent_params[:number_of_students], sex: parent_params[:sex], user_id: @user.id)
-
+      @parent = Parent.new(trim_params(parent_params).merge({user_id: @user.id}))
+      
       if @parent.save 
         token = encode_token({ user_id: @user.id })
         render json: { parent: combined_parent_user(@parent, @user), token: token }, status: :created
@@ -41,7 +41,7 @@ class ParentsController < ApplicationController
       @user.update_column(:user_name, parent_params[:user_name])
     end
 
-    if @parent.update(full_name: parent_params[:full_name], contact: parent_params[:contact], physical_address: parent_params[:physical_address], number_of_students: parent_params[:number_of_students], sex: parent_params[:sex], user_id: @user.id)
+    if @parent.update(trim_params(parent_params).merge({user_id: @user.id}))
       render json: combined_parent_user(@parent, @parent.user), status: :ok
     else
     end
@@ -72,5 +72,9 @@ class ParentsController < ApplicationController
 
     def combined_parent_user(parent, user)
       {user_name: user.user_name}.merge(parent.as_json)
+    end
+
+    def trim_params(parent_params)
+      parent_params.except(:user_name, :password)
     end
 end
