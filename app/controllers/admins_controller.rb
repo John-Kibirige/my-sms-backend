@@ -4,7 +4,7 @@ class AdminsController < ApplicationController
 
     if @user.save 
       # add logic for creating admin
-      @admin = Admin.new(full_name: admin_params[:full_name], sex: admin_params[:sex], contact: admin_params[:contact], email: admin_params[:email], user_id: @user.id)
+      @admin = Admin.new(trim_params(admin_params).merge({user_id: @user.id}))
 
       if @admin.save 
         token = encode_token({ user_id: @user.id })
@@ -24,14 +24,10 @@ class AdminsController < ApplicationController
   end
 
   def combined_admin_user(admin, user)
-  {
-    id: admin.id,
-    user_name: user.user_name,
-    password: user.password,
-    full_name: admin.full_name,
-    contact: admin.contact,
-    sex: admin.sex,
-    email: admin.email,
-  }
+    admin.merge({user_name: user.user_name, password: user.password})
+  end
+
+  def trim_params 
+    admin_params.except(:user_name, :password)
   end
 end
