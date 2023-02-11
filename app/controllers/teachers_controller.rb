@@ -27,7 +27,7 @@ class TeachersController < ApplicationController
         token = encode_token({ user_id: @user.id })
         render json: { teacher: combined_teacher_user(@teacher, @user), token: token }, status: :created
       else
-        render json: { message: 'Invalid teacher details' }, status: :not_acceptable
+        render json: { message: 'Invalid teacher details', errors: @teacher.errors }, status: :not_acceptable
       end
     else
       render json: {errors:  @user.errors}, status: :unprocessable_entity
@@ -61,7 +61,10 @@ class TeachersController < ApplicationController
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_teacher
+      begin
       @teacher = Teacher.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { message: 'Teacher not found' }, status: :not_found
     end
 
     # Only allow a list of trusted parameters through.
@@ -70,17 +73,6 @@ class TeachersController < ApplicationController
     end
 
     def combined_teacher_user(teacher, user)
-      {
-        id: teacher.id,
-        user_name: user.user_name,
-        full_name: teacher.full_name,
-        contact: teacher.contact,
-        email: teacher.email,
-        physical_address: teacher.physical_address,
-        sex: teacher.sex,
-        joining_date: teacher.joining_date,
-        created_at: teacher.created_at,
-        updated_at: teacher.updated_at
-      }
+      {user_name: user.user_name}.merge(teacher.as_json)
     end
 end
