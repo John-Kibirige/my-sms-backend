@@ -4,4 +4,7 @@ class Student < ApplicationRecord
   
   has_many :results, dependent: :destroy
   has_many :exams, through: :results
+
+  has_many :subject_students, dependent: :destroy
+  has_many :subjects, through: :subject_students
 end
