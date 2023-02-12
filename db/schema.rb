@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_11_202144) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_12_063816) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -23,6 +23,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_11_202144) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_admins_on_user_id"
+  end
+
+  create_table "exams", force: :cascade do |t|
+    t.string "name"
+    t.date "date"
+    t.string "term"
+    t.bigint "subject_id", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["subject_id"], name: "index_exams_on_subject_id"
   end
 
   create_table "parents", force: :cascade do |t|
@@ -91,6 +101,7 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_11_202144) do
   end
 
   add_foreign_key "admins", "users"
+  add_foreign_key "exams", "subjects"
   add_foreign_key "parents", "users"
   add_foreign_key "students", "parents"
   add_foreign_key "students", "users"
