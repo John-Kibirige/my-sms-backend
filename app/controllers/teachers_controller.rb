@@ -46,7 +46,10 @@ class TeachersController < ApplicationController
     end
 
     if @teacher.update(trim_params(teacher_params).merge({user_id: @user.id})) 
-      render json: combined_teacher_user(@teacher, @teacher.user), status: :ok
+      # add logic for updating subjects to teacher
+      create_subject_teachers(@teacher, teacher_params[:subjects_ids]) unless teacher_params[:subjects_ids].nil?
+      
+      render json: combined_teacher_user_subject(@teacher, @teacher.user, @teacher.subjects), status: :ok
     else 
       render json: @teacher.errors, status: :unprocessable_entity
     end
@@ -89,7 +92,7 @@ class TeachersController < ApplicationController
 
     def create_subject_teachers(teacher, subjects_ids)
       subjects_ids.each do |subject_id|
-        SubjectTeacher.create(teacher_id: teacher.id, subject_id: subject_id)
+        SubjectTeacher.create(teacher_id: teacher.id, subject_id: subject_id) unless SubjectTeacher.find_by(teacher_id: teacher.id, subject_id: subject_id).present?
       end
     end
 end
