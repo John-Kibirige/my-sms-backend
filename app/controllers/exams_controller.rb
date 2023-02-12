@@ -3,7 +3,7 @@ class ExamsController < ApplicationController
 
   # GET /exams
   def index
-    @exams = Exam.all
+    @exams = Exam.where(subject_id: params[:subject_id])
 
     render json: @exams
   end
@@ -15,10 +15,10 @@ class ExamsController < ApplicationController
 
   # POST /exams
   def create
-    @exam = Exam.new(exam_params)
+    @exam = Exam.new(exam_params.merge({subject_id: params[:subject_id]}))
 
     if @exam.save
-      render json: @exam, status: :created, location: @exam
+      render json: @exam, status: :created
     else
       render json: @exam.errors, status: :unprocessable_entity
     end
@@ -36,16 +36,22 @@ class ExamsController < ApplicationController
   # DELETE /exams/1
   def destroy
     @exam.destroy
+
+    render json: { message: 'Exam deleted successfully'}
   end
 
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_exam
-      @exam = Exam.find(params[:id])
+      begin
+        @exam = Exam.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { message: 'Exam not found' }, status: :not_found
+      end
     end
 
     # Only allow a list of trusted parameters through.
     def exam_params
-      params.require(:exam).permit(:name, :date, :term, :subject_id)
+      params.require(:exam).permit(:name, :date, :term)
     end
 end
