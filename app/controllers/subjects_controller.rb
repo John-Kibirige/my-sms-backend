@@ -36,12 +36,18 @@ class SubjectsController < ApplicationController
   # DELETE /subjects/1
   def destroy
     @subject.destroy
+
+    render json: { message: "subject deleted successfully"}
   end
 
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_subject
-      @subject = Subject.find(params[:id])
+      begin
+        @subject = Subject.find(params[:id])
+      rescue ActiveRecord::RecordNotFound
+        render json: { message: 'Subject not found' }, status: :not_found
+      end
     end
 
     # Only allow a list of trusted parameters through.
