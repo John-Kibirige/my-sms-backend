@@ -25,7 +25,11 @@ class TeachersController < ApplicationController
 
       if @teacher.save
         token = encode_token({ user_id: @user.id })
-        render json: { teacher: combined_teacher_user(@teacher, @user), token: token }, status: :created
+
+        # add logic for adding subjects to teacher
+        create_subject_teachers(@teacher, teacher_params[:subjects_ids]) unless teacher_params[:subjects_ids].nil?
+        render json: { teacher: combined_teacher_user_subject(@teacher, @user, @teacher.subjects), jwt: token }, status: :created
+        
       else
         render json: { message: 'Invalid teacher details', errors: @teacher.errors }, status: :not_acceptable
       end
@@ -69,14 +73,23 @@ class TeachersController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def teacher_params
-      params.require(:teacher).permit(:full_name, :contact, :email, :physical_address, :sex, :joining_date, :user_name, :password)
+      params.require(:teacher).permit(:full_name, :contact, :email, :physical_address, :sex, :joining_date, :user_name, :password, :subjects_ids => [])
     end
 
-    def combined_teacher_user(teacher, user)
-      {user_name: user.user_name}.merge(teacher.as_json)
+    def combined_teacher_user_subject(teacher, user, subjects)
+      modified_subjects = subjects.map do |subject| 
+        subject.name
+      end
+      {user_name: user.user_name}.merge(teacher.as_json).merge({subjects: modified_subjects})
     end
 
     def trim_params(teacher_params)
-      teacher_params.except(:user_name, :password)
+      teacher_params.except(:user_name, :password, :subjects_ids)
+    end
+
+    def create_subject_teachers(teacher, subjects_ids)
+      subjects_ids.each do |subject_id|
+        SubjectTeacher.create(teacher_id: teacher.id, subject_id: subject_id)
+      end
     end
 end
