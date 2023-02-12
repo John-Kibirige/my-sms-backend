@@ -33,8 +33,10 @@ class StudentsController < ApplicationController
           # add logic for adding subjects to student
           create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
 
-          render json: { student: combined_student_user_parent_subject(@student, @user, @parent, @student.subjects), jwt: token }, status: :created
+          # add logic for adding a stream or streams to student
+          create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
 
+          render json: { student: combined_student_user_parent_subject_stream(@student, @user, @parent, @student.subjects, @student.streams[0]), jwt: token }, status: :created
         else
           render json: { message: 'Invalid student details', errors: @student.errors }, status: :not_acceptable
         end
@@ -85,18 +87,18 @@ class StudentsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def student_params
-      params.require(:student).permit(:full_name, :sex, :date_of_birth, :contact, :physical_address, :date_of_enrollment, :parent_user_name, :user_name, :password, :subjects_ids => [])
+      params.require(:student).permit(:full_name, :sex, :date_of_birth, :contact, :physical_address, :date_of_enrollment, :parent_user_name, :user_name, :password, :stream_name, :subjects_ids => [])
     end
 
-    def combined_student_user_parent_subject(student, user, parent, subjects)
+    def combined_student_user_parent_subject_stream(student, user, parent, subjects, stream)
       modified_subjects = subjects.map do |subject| 
         subject.name
       end
-      {user_name: user.user_name}.merge({parent_user_name: parent.user.user_name}).merge(student.as_json).merge({subjects: modified_subjects})
+      {user_name: user.user_name}.merge({parent_user_name: parent.user.user_name}).merge(student.as_json).merge({subjects: modified_subjects, stream: stream.name})
     end
 
     def trim_params(student_params)
-      student_params.except(:user_name, :password, :parent_user_name, :subjects_ids)
+      student_params.except(:user_name, :password, :parent_user_name, :subjects_ids, :stream_name)
     end
 
     def create_subject_students(student, subject_ids)
@@ -104,5 +106,10 @@ class StudentsController < ApplicationController
       subject_ids.each do |subject_id|
         SubjectStudent.create(student_id: student.id, subject_id: subject_id)
       end
+    end
+
+    def create_student_stream(student, stream_name)
+      stream = Stream.find_by(name: stream_name)
+      StudentStream.create(student_id: student.id, stream_id: stream.id)
     end
 end
