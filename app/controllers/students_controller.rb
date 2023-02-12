@@ -50,12 +50,17 @@ class StudentsController < ApplicationController
   # PATCH/PUT /students/1
   def update
     @user = User.find(@student.user_id)
+    @parent = Parent.find(@student.parent_id)
+
     if @user.user_name != student_params[:user_name]
       @user.update_column(:user_name, student_params[:user_name])
     end
 
     if @student.update(trim_params(student_params).merge({parent_id: @parent.id, user_id: @user.id}))
-      render json: combined_student_user_parent(@student, @student.user, @student.parent), status: :ok
+       # add logic for adding subjects to student
+       create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
+
+      render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects), status: :ok
     else
       render json: { errors: @student.errors }, status: :not_acceptable
     end
@@ -95,8 +100,9 @@ class StudentsController < ApplicationController
     end
 
     def create_subject_students(student, subject_ids)
+      SubjectStudent.where(student_id: student.id).destroy_all
       subject_ids.each do |subject_id|
-        SubjectStudent.create(student_id: student.id, subject_id: subject_id) unless SubjectStudent.find_by(student_id: student.id, subject_id: subject_id).present?
+        SubjectStudent.create(student_id: student.id, subject_id: subject_id)
       end
     end
 end
