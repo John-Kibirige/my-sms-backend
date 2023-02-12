@@ -5,14 +5,14 @@ class StudentsController < ApplicationController
   def index
     @students = Student.all.includes(:user, :parent)
     modified_students = @students.map do |student| 
-      combined_student_user_parent(student, student.user, student.parent)
+      combined_student_user_parent_subject(student, student.user, student.parent, student.subjects)
     end
     render json: modified_students
   end
 
   # GET /students/1
   def show
-    render json: combined_student_user_parent(@student, @student.user, @student.parent)
+    render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects)
   end
 
   # POST /students
@@ -29,7 +29,12 @@ class StudentsController < ApplicationController
 
         if @student && @student.save
           token = encode_token({ user_id: @user.id })
-          render json: { student: combined_student_user_parent(@student, @user, @parent), token: token }, status: :created
+
+          # add logic for adding subjects to student
+          create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
+
+          render json: { student: combined_student_user_parent_subject(@student, @user, @parent, @student.subjects), jwt: token }, status: :created
+
         else
           render json: { message: 'Invalid student details', errors: @student.errors }, status: :not_acceptable
         end
@@ -58,10 +63,7 @@ class StudentsController < ApplicationController
 
   # DELETE /students/1
   def destroy
-    @user = @student.user
-
     @student.destroy
-    @user.destroy
   
     render json: { message: 'Student deleted successfully'}
   end
@@ -78,14 +80,23 @@ class StudentsController < ApplicationController
 
     # Only allow a list of trusted parameters through.
     def student_params
-      params.require(:student).permit(:full_name, :sex, :date_of_birth, :contact, :physical_address, :date_of_enrollment, :parent_user_name, :user_name, :password)
+      params.require(:student).permit(:full_name, :sex, :date_of_birth, :contact, :physical_address, :date_of_enrollment, :parent_user_name, :user_name, :password, :subjects_ids => [])
     end
 
-    def combined_student_user_parent(student, user, parent)
-      {user_name: user.user_name}.merge({parent_user_name: parent.user.user_name}).merge(student.as_json)
+    def combined_student_user_parent_subject(student, user, parent, subjects)
+      modified_subjects = subjects.map do |subject| 
+        subject.name
+      end
+      {user_name: user.user_name}.merge({parent_user_name: parent.user.user_name}).merge(student.as_json).merge({subjects: modified_subjects})
     end
 
     def trim_params(student_params)
-      student_params.except(:user_name, :password, :parent_user_name)
+      student_params.except(:user_name, :password, :parent_user_name, :subjects_ids)
+    end
+
+    def create_subject_students(student, subject_ids)
+      subject_ids.each do |subject_id|
+        SubjectStudent.create(student_id: student.id, subject_id: subject_id) unless SubjectStudent.find_by(student_id: student.id, subject_id: subject_id).present?
+      end
     end
 end
