@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[7.0].define(version: 2023_02_12_063816) do
+ActiveRecord::Schema[7.0].define(version: 2023_02_12_075539) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
@@ -45,6 +45,16 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_12_063816) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_parents_on_user_id"
+  end
+
+  create_table "results", force: :cascade do |t|
+    t.bigint "exam_id", null: false
+    t.bigint "student_id", null: false
+    t.string "mark"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["exam_id"], name: "index_results_on_exam_id"
+    t.index ["student_id"], name: "index_results_on_student_id"
   end
 
   create_table "streams", force: :cascade do |t|
@@ -103,6 +113,8 @@ ActiveRecord::Schema[7.0].define(version: 2023_02_12_063816) do
   add_foreign_key "admins", "users"
   add_foreign_key "exams", "subjects"
   add_foreign_key "parents", "users"
+  add_foreign_key "results", "exams"
+  add_foreign_key "results", "students"
   add_foreign_key "students", "parents"
   add_foreign_key "students", "users"
   add_foreign_key "teachers", "users"
