@@ -17,16 +17,25 @@ class ApplicationController < ActionController::API
         end   
     end
 
-    def authorized_user 
+    def authenticate_user 
         decoded_token = decode_token()
 
         if decoded_token 
             user_id = decoded_token[0]['user_id']
-            @user = User.find_by(id: user_id)
+            @current_user = User.find_by(id: user_id)
         end
     end
 
-    def authorize 
-        render json: { message: 'Please log in' }, status: :unauthorized unless authorized_user
+    def authenticate 
+        render json: { message: 'Please log in first' } unless authenticate_user
+    end
+
+    def current_user 
+        @current_user
+    end
+
+    def authorized_actions(subject)
+        actions = [:create, :update, :destroy]
+        render json: { message: 'You are not authorized to perform this action' }, status: :forbidden unless can? actions, subject
     end
 end
