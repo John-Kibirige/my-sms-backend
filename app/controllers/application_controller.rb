@@ -1,4 +1,5 @@
 class ApplicationController < ActionController::API
+
     def encode_token(payload)
         JWT.encode(payload, 'st-mark-secret')
     end
@@ -8,14 +9,9 @@ class ApplicationController < ActionController::API
 
         if auth_header 
             token = auth_header.split(' ').last
-
-            if InvalidToken.find_by(name: token).nil?
-                 begin
-                    JWT.decode(token, 'st-mark-secret', true, algorithm: 'HS256')
-                rescue JWT::DecodeError
-                    nil
-                end
-            else
+            begin
+                JWT.decode(token, 'st-mark-secret', true, algorithm: 'HS256')
+            rescue JWT::DecodeError
                 nil
             end
         end   
@@ -27,8 +23,6 @@ class ApplicationController < ActionController::API
         if decoded_token 
             user_id = decoded_token[0]['user_id']
             @current_user = User.find_by(id: user_id)
-        else
-            nil
         end
     end
 
