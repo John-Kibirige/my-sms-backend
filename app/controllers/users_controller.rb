@@ -10,6 +10,16 @@ class UsersController < ApplicationController
     end
   end
 
+  def logout 
+    auth_header = request.headers['Authorization']
+    return unless auth_header
+
+    token = auth_header.split.last
+    InvalidToken.create(name: token)
+
+    render json: { message: 'Logged out successfully' }, status: :ok
+  end
+
   private
 
   def user_params

@@ -1,34 +1,42 @@
 class ApplicationController < ActionController::API
-  def encode_token(payload)
-    JWT.encode(payload, 'st-mark-secret')
-  end
-
-  def decode_token
-    auth_header = request.headers['Authorization']
-
-    return unless auth_header
-
-    token = auth_header.split.last
-    begin
-      JWT.decode(token, 'st-mark-secret', true, algorithm: 'HS256')
-    rescue JWT::DecodeError
-      nil
+    def encode_token(payload)
+        JWT.encode(payload, 'st-mark-secret')
     end
-  end
 
-  def authenticate_user
-    decoded_token = decode_token
+    def decode_token
+        auth_header = request.headers['Authorization']
 
-    return unless decoded_token
-    # add logic for checking if the token is in the invalid tokens table
+        if auth_header 
+            token = auth_header.split(' ').last
 
-    user_id = decoded_token[0]['user_id']
-    @current_user = User.find_by(id: user_id)
-  end
+            if InvalidToken.find_by(name: token).nil?
+                 begin
+                    JWT.decode(token, 'st-mark-secret', true, algorithm: 'HS256')
+                rescue JWT::DecodeError
+                    nil
+                end
+            else
+                nil
+            end
+        end   
+    end
 
-  def authenticate
-    render json: { message: 'Please log in first' } unless authenticate_user
-  end
+    def authenticate_user 
+        decoded_token = decode_token()
 
-  attr_reader :current_user
+        if decoded_token 
+            user_id = decoded_token[0]['user_id']
+            @current_user = User.find_by(id: user_id)
+        else
+            nil
+        end
+    end
+
+    def authenticate 
+        render json: { message: 'Please log in first' } unless authenticate_user
+    end
+
+    def current_user 
+        @current_user
+    end
 end
