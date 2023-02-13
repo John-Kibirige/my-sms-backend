@@ -1,9 +1,12 @@
 class StudentsController < ApplicationController
+  # load_and_authorize_resource
+  before_action :authenticate, only: %i[ index show create update destroy ]
   before_action :set_student, only: %i[ show update destroy ]
 
   # GET /students
   def index
     @students = Student.all.includes(:user, :parent, :subjects, :streams)
+    
     modified_students = @students.map do |student| 
       combined_student_user_parent_subject_stream(student, student.user, student.parent, student.subjects, student.streams[0])
     end
@@ -17,41 +20,8 @@ class StudentsController < ApplicationController
 
   # POST /students
   def create
-    create_student
-  end
-
-  # PATCH/PUT /students/1
-  def update
-    @user = User.find(@student.user_id)
-    @parent = Parent.find(@student.parent_id)
-
-    if @user.user_name != student_params[:user_name]
-      @user.update_column(:user_name, student_params[:user_name])
-    end
-
-    if @student.update(trim_params(student_params).merge({parent_id: @parent.id, user_id: @user.id}))
-       # add logic for adding subjects to student
-       create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
-
-      # add logic for adding a stream or streams to student
-      create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
-
-      render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects, @student.streams[0]), status: :ok
-    else
-      render json: { errors: @student.errors }, status: :not_acceptable
-    end
-  end
-
-  # DELETE /students/1
-  def destroy
-    @student.destroy
-  
-    render json: { message: 'Student deleted successfully'}
-  end
-
-  private
-    def create_student 
-      @user = User.new(user_name: student_params[:user_name], password: student_params[:password], role: 'student')
+    if can? :create, Student
+        @user = User.new(user_name: student_params[:user_name], password: student_params[:password], role: 'student')
 
       if @user.save 
         parent_user = User.find_by(user_name: student_params[:parent_user_name])
@@ -81,7 +51,49 @@ class StudentsController < ApplicationController
       else
         render json: { errors: @user.errors }, status: :not_acceptable
       end
+    else 
+      render json: { message: 'You are not authorized to create a student'}, status: :forbidden
     end
+  end
+
+  # PATCH/PUT /students/1
+  def update
+    if can? :update, student
+      @user = User.find(@student.user_id)
+      @parent = Parent.find(@student.parent_id)
+
+      if @user.user_name != student_params[:user_name]
+        @user.update_column(:user_name, student_params[:user_name])
+      end
+
+      if @student.update(trim_params(student_params).merge({parent_id: @parent.id, user_id: @user.id}))
+        # add logic for adding subjects to student
+        create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
+
+        # add logic for adding a stream or streams to student
+        create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
+
+        render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects, @student.streams[0]), status: :ok
+      else
+        render json: { errors: @student.errors }, status: :not_acceptable
+      end
+    else
+      render json: { message: 'You are not authorized to update a student'}, status: :forbidden
+    end
+  end
+
+  # DELETE /students/1
+  def destroy
+    if can? :destroy, Student
+       @student.destroy
+  
+        render json: { message: 'Student deleted successfully'}
+    else 
+      render json: { message: 'You are not authorized to delete a student'}, status: :forbidden
+    end
+  end
+
+  private
     # Use callbacks to share common setup or constraints between actions.
     def set_student
       begin

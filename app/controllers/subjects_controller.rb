@@ -1,4 +1,5 @@
 class SubjectsController < ApplicationController
+  before_action :authenticate
   before_action :set_subject, only: %i[ show update destroy ]
 
   # GET /subjects
