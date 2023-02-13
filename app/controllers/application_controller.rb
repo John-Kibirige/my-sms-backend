@@ -20,6 +20,7 @@ class ApplicationController < ActionController::API
     decoded_token = decode_token
 
     return unless decoded_token
+    # add logic for checking if the token is in the invalid tokens table
 
     user_id = decoded_token[0]['user_id']
     @current_user = User.find_by(id: user_id)
