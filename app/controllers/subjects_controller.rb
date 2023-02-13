@@ -1,5 +1,5 @@
 class SubjectsController < ApplicationController
-  before_action :authenticate
+  before_action :authenticate, only: %i[ index show create update destroy ]
   before_action :set_subject, only: %i[ show update destroy ]
 
   # GET /subjects
@@ -16,29 +16,40 @@ class SubjectsController < ApplicationController
 
   # POST /subjects
   def create
-    @subject = Subject.new(subject_params)
+    if can? :create, Subject
+      @subject = Subject.new(subject_params)
 
-    if @subject.save
-      render json: @subject, status: :created, location: @subject
+      if @subject.save
+        render json: @subject, status: :created, location: @subject
+      else
+        render json: @subject.errors, status: :unprocessable_entity
+      end
     else
-      render json: @subject.errors, status: :unprocessable_entity
+      render json: { message: 'You are not authorized to create a subject'}, status: :forbidden
     end
   end
 
   # PATCH/PUT /subjects/1
   def update
-    if @subject.update(subject_params)
-      render json: @subject
+    if can? :update, Subject
+      if @subject.update(subject_params)
+        render json: @subject
+      else
+        render json: @subject.errors, status: :unprocessable_entity
+      end
     else
-      render json: @subject.errors, status: :unprocessable_entity
+      render json: { message: 'You are not authorized to update a subject'}, status: :forbidden
     end
   end
 
   # DELETE /subjects/1
   def destroy
-    @subject.destroy
-
-    render json: { message: "subject deleted successfully"}
+    if can? :destroy, Subject
+      @subject.destroy
+      render json: { message: "subject deleted successfully"}
+    else 
+      render json: { message: 'You are not authorized to delete a subject'}, status: :forbidden
+    end
   end
 
   private

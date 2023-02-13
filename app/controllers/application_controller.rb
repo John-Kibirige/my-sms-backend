@@ -33,9 +33,4 @@ class ApplicationController < ActionController::API
     def current_user 
         @current_user
     end
-
-    def authorized_actions(subject)
-        actions = [:create, :update, :destroy]
-        render json: { message: 'You are not authorized to perform this action' }, status: :forbidden unless can? actions, subject
-    end
 end
