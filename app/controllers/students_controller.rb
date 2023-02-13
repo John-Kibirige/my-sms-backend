@@ -21,7 +21,7 @@ class StudentsController < ApplicationController
   end
 
   # POST /students
-  def create
+  def create # rubocop:disable Metrics/CyclomaticComplexity, Metrics/MethodLength, Metrics/PerceivedComplexity
     if can? :create, Student
       @user = User.new(user_name: student_params[:user_name], password: student_params[:password], role: 'student')
 
@@ -35,17 +35,19 @@ class StudentsController < ApplicationController
 
           @student = Student.new(trim_params(student_params).merge({ parent_id: @parent.id, user_id: @user.id }))
 
-          if @student&.save
+          if @student&.save # rubocop:disable Metrics/BlockNesting
             token = encode_token({ user_id: @user.id })
 
             # add logic for adding subjects to student
-            create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
+            create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil? # rubocop:disable Metrics/BlockNesting
 
             # add logic for adding a stream or streams to student
-            create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
+            create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil? # rubocop:disable Metrics/BlockNesting
 
-            render json: { student: combined_student_user_parent_subject_stream(@student, @user, @parent, @student.subjects, @student.streams[0]), jwt: token },
-                   status: :created
+            render json: { student: combined_student_user_parent_subject_stream(
+              @student, @user, @parent, @student.subjects, @student.streams[0]
+            ),
+                           jwt: token }, status: :created
           else
             render json: { message: 'Invalid student details', errors: @student.errors }, status: :not_acceptable
           end
@@ -74,8 +76,9 @@ class StudentsController < ApplicationController
         # add logic for adding a stream or streams to student
         create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
 
-        render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects, @student.streams[0]),
-               status: :ok
+        render json: combined_student_user_parent_subject(
+          @student, @student.user, @student.parent, @student.subjects, @student.streams[0]
+        ), status: :ok
       else
         render json: { errors: @student.errors }, status: :not_acceptable
       end
@@ -107,16 +110,18 @@ class StudentsController < ApplicationController
   # Only allow a list of trusted parameters through.
   def student_params
     params.require(:student).permit(:full_name, :sex, :date_of_birth, :contact, :physical_address,
-                                    :date_of_enrollment, :parent_user_name, :user_name, :password, :stream_name, subjects_ids: [])
+                                    :date_of_enrollment, :parent_user_name, :user_name, :password, :stream_name, subjects_ids: []) # rubocop:disable Layout/LineLength
   end
 
   def combined_student_user_parent_subject_stream(student, user, parent, subjects, stream)
     modified_subjects = subjects.map(&:name)
     return if stream.nil?
 
-    { user_name: user.user_name }.merge({ parent_user_name: parent.user.user_name }).merge(student.as_json).merge({
-                                                                                                                    subjects: modified_subjects, stream: stream.name
-                                                                                                                  })
+    { user_name: user.user_name }.merge(
+      { parent_user_name: parent.user.user_name }
+    ).merge(student.as_json).merge(
+      { subjects: modified_subjects, stream: stream.name }
+    )
   end
 
   def trim_params(student_params)

@@ -29,8 +29,8 @@ class TeachersController < ApplicationController
 
         # add logic for adding subjects to teacher
         create_subject_teachers(@teacher, teacher_params[:subjects_ids]) unless teacher_params[:subjects_ids].nil?
-        render json: { teacher: combined_teacher_user_subject(@teacher, @user, @teacher.subjects), jwt: token }, 
-status: :created
+        render json: { teacher: combined_teacher_user_subject(@teacher, @user, @teacher.subjects), jwt: token },
+               status: :created
 
       else
         render json: { message: 'Invalid teacher details', errors: @teacher.errors }, status: :not_acceptable
@@ -43,9 +43,7 @@ status: :created
   # PATCH/PUT /teachers/1
   def update
     @user = User.find(@teacher.user_id)
-    if @user.user_name != teacher_params[:user_name]
-      @user.update_column(:user_name, teacher_params[:user_name])
-    end
+    @user.update_column(:user_name, teacher_params[:user_name]) if @user.user_name != teacher_params[:user_name]
 
     if @teacher.update(trim_params(teacher_params).merge({ user_id: @user.id }))
       # add logic for updating subjects to teacher
@@ -68,19 +66,17 @@ status: :created
 
   private
 
-    # Use callbacks to share common setup or constraints between actions.
+  # Use callbacks to share common setup or constraints between actions.
   def set_teacher
-    
-      @teacher = Teacher.find(params[:id])
-    rescue ActiveRecord::RecordNotFound
-      render json: { message: 'Teacher not found' }, status: :not_found
-    
+    @teacher = Teacher.find(params[:id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { message: 'Teacher not found' }, status: :not_found
   end
 
-    # Only allow a list of trusted parameters through.
+  # Only allow a list of trusted parameters through.
   def teacher_params
-    params.require(:teacher).permit(:full_name, :contact, :email, :physical_address, :sex, :joining_date, :user_name, 
-:password, subjects_ids: [])
+    params.require(:teacher).permit(:full_name, :contact, :email, :physical_address, :sex, :joining_date, :user_name,
+                                    :password, subjects_ids: [])
   end
 
   def combined_teacher_user_subject(teacher, user, subjects)
@@ -94,8 +90,9 @@ status: :created
 
   def create_subject_teachers(teacher, subjects_ids)
     subjects_ids.each do |subject_id|
-      SubjectTeacher.create(teacher_id: teacher.id, subject_id:) unless SubjectTeacher.find_by(
-teacher_id: teacher.id, subject_id:)).present?
+      unless SubjectTeacher.find_by(teacher_id: teacher.id, subject_id:).present?
+        SubjectTeacher.create(teacher_id: teacher.id, subject_id:)
+      end
     end
   end
 end

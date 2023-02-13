@@ -12,7 +12,7 @@ class Ability
     when 'teacher'
       can :read, :all
       can :manage, [Exam, Result]
-    when 'parent'
+    when 'parent' # rubocop:disable Lint/DuplicateBranch
       can :read, :all
     end
   end
