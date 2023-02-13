@@ -2,20 +2,24 @@ class AdminsController < ApplicationController
   before_action :authenticate
   
   def create
-    @user = User.new(user_name: admin_params[:user_name], password: admin_params[:password], role: 'admin')
+    if can? :create, admin
+      @user = User.new(user_name: admin_params[:user_name], password: admin_params[:password], role: 'admin')
 
-    if @user.save 
-      # add logic for creating admin
-      @admin = Admin.new(trim_params(admin_params).merge({user_id: @user.id}))
+      if @user.save 
+        # add logic for creating admin
+        @admin = Admin.new(trim_params(admin_params).merge({user_id: @user.id}))
 
-      if @admin.save 
-        token = encode_token({ user_id: @user.id })
-        render json: { admin: combined_admin_user(@admin, @user), token: token }, status: :created 
-      else 
-        render json: { message: 'Invalid admin details' }, status: :not_acceptable
+        if @admin.save 
+          token = encode_token({ user_id: @user.id })
+          render json: { admin: combined_admin_user(@admin, @user), token: token }, status: :created 
+        else 
+          render json: { message: 'Invalid admin details' }, status: :not_acceptable
+        end
+      else
+        render json: { errors: @user.errors }, status: :not_acceptable
       end
-    else
-      render json: { errors: @user.errors }, status: :not_acceptable
+    else 
+      render json: { message: 'You are not authorized to create an admin' }
     end
   end                          
 
