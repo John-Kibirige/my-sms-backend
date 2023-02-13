@@ -5,9 +5,9 @@ class User < ApplicationRecord
     validates :password, presence: true, length: { minimum: 8 }
     validates :role, presence: true
 
-    has_one :admins
-    has_one :teachers
-    has_one :parents
-    has_one :students
+    has_one :admin
+    has_one :teacher
+    has_one :parent
+    has_one :student
 
 end

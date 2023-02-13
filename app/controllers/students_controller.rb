@@ -3,16 +3,16 @@ class StudentsController < ApplicationController
 
   # GET /students
   def index
-    @students = Student.all.includes(:user, :parent)
+    @students = Student.all.includes(:user, :parent, :subjects, :streams)
     modified_students = @students.map do |student| 
-      combined_student_user_parent_subject(student, student.user, student.parent, student.subjects)
+      combined_student_user_parent_subject_stream(student, student.user, student.parent, student.subjects, student.streams[0])
     end
     render json: modified_students
   end
 
   # GET /students/1
   def show
-    render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects)
+    render json: combined_student_user_parent_subject_stream(@student, @student.user, @student.parent, @student.subjects, @student.streams[0])
   end
 
   # POST /students
@@ -62,7 +62,10 @@ class StudentsController < ApplicationController
        # add logic for adding subjects to student
        create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
 
-      render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects), status: :ok
+      # add logic for adding a stream or streams to student
+      create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
+
+      render json: combined_student_user_parent_subject(@student, @student.user, @student.parent, @student.subjects, @student.streams[0]), status: :ok
     else
       render json: { errors: @student.errors }, status: :not_acceptable
     end
@@ -94,7 +97,7 @@ class StudentsController < ApplicationController
       modified_subjects = subjects.map do |subject| 
         subject.name
       end
-      {user_name: user.user_name}.merge({parent_user_name: parent.user.user_name}).merge(student.as_json).merge({subjects: modified_subjects, stream: stream.name})
+      {user_name: user.user_name}.merge({parent_user_name: parent.user.user_name}).merge(student.as_json).merge({subjects: modified_subjects, stream: stream.name}) unless stream.nil?
     end
 
     def trim_params(student_params)
@@ -109,6 +112,7 @@ class StudentsController < ApplicationController
     end
 
     def create_student_stream(student, stream_name)
+      StudentStream.where(student_id: student.id).destroy_all
       stream = Stream.find_by(name: stream_name)
       StudentStream.create(student_id: student.id, stream_id: stream.id)
     end
