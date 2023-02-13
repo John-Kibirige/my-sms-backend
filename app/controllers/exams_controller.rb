@@ -1,4 +1,5 @@
 class ExamsController < ApplicationController
+  before_action :authenticate
   before_action :set_exam, only: %i[ show update destroy ]
 
   # GET /exams

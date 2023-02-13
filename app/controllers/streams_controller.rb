@@ -1,4 +1,5 @@
 class StreamsController < ApplicationController
+  before_action :authenticate
   before_action :set_stream, only: %i[ show update destroy ]
 
   # GET /streams

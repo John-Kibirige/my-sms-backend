@@ -17,36 +17,7 @@ class StudentsController < ApplicationController
 
   # POST /students
   def create
-    @user = User.new(user_name: student_params[:user_name], password: student_params[:password], role: 'student')
-
-    if @user.save 
-      parent_user = User.find_by(user_name: student_params[:parent_user_name])
-
-      if parent_user != nil 
-        @parent = Parent.find_by(user_id: parent_user.id)
-
-        @student = Student.new(trim_params(student_params).merge({parent_id: @parent.id, user_id: @user.id}))
-
-        if @student && @student.save
-          token = encode_token({ user_id: @user.id })
-
-          # add logic for adding subjects to student
-          create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
-
-          # add logic for adding a stream or streams to student
-          create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
-
-          render json: { student: combined_student_user_parent_subject_stream(@student, @user, @parent, @student.subjects, @student.streams[0]), jwt: token }, status: :created
-        else
-          render json: { message: 'Invalid student details', errors: @student.errors }, status: :not_acceptable
-        end
-      else
-        render json: { message: 'Invalid parent user_name'}, status: :not_acceptable
-      end
-
-    else
-      render json: { errors: @user.errors }, status: :not_acceptable
-    end
+    create_student
   end
 
   # PATCH/PUT /students/1
@@ -79,6 +50,38 @@ class StudentsController < ApplicationController
   end
 
   private
+    def create_student 
+      @user = User.new(user_name: student_params[:user_name], password: student_params[:password], role: 'student')
+
+      if @user.save 
+        parent_user = User.find_by(user_name: student_params[:parent_user_name])
+
+        if parent_user != nil 
+          @parent = Parent.find_by(user_id: parent_user.id)
+
+          @student = Student.new(trim_params(student_params).merge({parent_id: @parent.id, user_id: @user.id}))
+
+          if @student && @student.save
+            token = encode_token({ user_id: @user.id })
+
+            # add logic for adding subjects to student
+            create_subject_students(@student, student_params[:subjects_ids]) unless student_params[:subjects_ids].nil?
+
+            # add logic for adding a stream or streams to student
+            create_student_stream(@student, student_params[:stream_name]) unless student_params[:stream_name].nil?
+
+            render json: { student: combined_student_user_parent_subject_stream(@student, @user, @parent, @student.subjects, @student.streams[0]), jwt: token }, status: :created
+          else
+            render json: { message: 'Invalid student details', errors: @student.errors }, status: :not_acceptable
+          end
+        else
+          render json: { message: 'Invalid parent user_name'}, status: :not_acceptable
+        end
+
+      else
+        render json: { errors: @user.errors }, status: :not_acceptable
+      end
+    end
     # Use callbacks to share common setup or constraints between actions.
     def set_student
       begin

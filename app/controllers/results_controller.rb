@@ -1,4 +1,5 @@
 class ResultsController < ApplicationController
+  before_action :authenticate
   before_action :set_result, only: %i[ show update destroy ]
 
   # GET /results

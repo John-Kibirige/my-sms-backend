@@ -1,4 +1,6 @@
 class AdminsController < ApplicationController
+  before_action :authenticate
+  
   def create
     @user = User.new(user_name: admin_params[:user_name], password: admin_params[:password], role: 'admin')
 
