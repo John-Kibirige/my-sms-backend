@@ -1,5 +1,5 @@
 class ParentsController < ApplicationController
-  before_action :authenticate
+  before_action :authenticate, except: %i[ index show ]
   before_action :set_parent, only: %i[ show update destroy ]
 
   # GET /parents

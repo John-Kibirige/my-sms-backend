@@ -1,5 +1,5 @@
 class StreamsController < ApplicationController
-  before_action :authenticate
+  before_action :authenticate, except: %i[ index show ]
   before_action :set_stream, only: %i[ show update destroy ]
 
   # GET /streams
@@ -16,29 +16,40 @@ class StreamsController < ApplicationController
 
   # POST /streams
   def create
-    @stream = Stream.new(stream_params)
+   if can? :create, Stream 
+       @stream = Stream.new(stream_params)
 
-    if @stream.save
-      render json: @stream, status: :created, location: @stream
-    else
-      render json: @stream.errors, status: :unprocessable_entity
+      if @stream.save
+        render json: @stream, status: :created, location: @stream
+      else
+        render json: @stream.errors, status: :unprocessable_entity
+      end
+    else 
+      render json: { message: 'You are not authorized to create a stream' }, status: :unauthorized
     end
   end
 
   # PATCH/PUT /streams/1
   def update
-    if @stream.update(stream_params)
-      render json: @stream
-    else
-      render json: @stream.errors, status: :unprocessable_entity
+    if can? :update, Stream 
+      if @stream.update(stream_params)
+        render json: @stream
+      else
+        render json: @stream.errors, status: :unprocessable_entity
+      end
+    else 
+      render json: { message: 'You are not authorized to update a stream' }, status: :unauthorized
     end
   end
 
   # DELETE /streams/1
   def destroy
-    @stream.destroy
-
-    render json: {message: "Stream deleted successfully"}
+    if can? :destroy, Stream 
+      @stream.destroy
+      render json: {message: "Stream deleted successfully"}
+    else
+      render json: { message: 'You are not authorized to delete a stream' }, status: :unauthorized
+    end
   end
 
   private

@@ -1,5 +1,5 @@
 class AdminsController < ApplicationController
-  before_action :authenticate
+  before_action :authenticate, except: %i[ index show ]
   
   def create
     if can? :create, admin

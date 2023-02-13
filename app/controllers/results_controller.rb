@@ -1,5 +1,5 @@
 class ResultsController < ApplicationController
-  before_action :authenticate
+  before_action :authenticate, except: %i[ index show ]
   before_action :set_result, only: %i[ show update destroy ]
 
   # GET /results
@@ -16,27 +16,40 @@ class ResultsController < ApplicationController
 
   # POST /results
   def create
-    @result = Result.new(result_params)
+    if can? :create, Result
+      @result = Result.new(result_params)
 
-    if @result.save
-      render json: @result, status: :created, location: @result
-    else
-      render json: @result.errors, status: :unprocessable_entity
+      if @result.save
+        render json: @result, status: :created, location: @result
+      else
+        render json: @result.errors, status: :unprocessable_entity
+      end
+    else 
+      render json: { message: 'You are not authorized to create a result' }, status: :unauthorized
     end
   end
 
   # PATCH/PUT /results/1
   def update
-    if @result.update(result_params)
+   if can? :update, Result
+     if @result.update(result_params)
       render json: @result
-    else
-      render json: @result.errors, status: :unprocessable_entity
-    end
+      else
+        render json: @result.errors, status: :unprocessable_entity
+      end
+   else
+    render json: { message: 'You are not authorized to update a result' }, status: :unauthorized
+   end
   end
 
   # DELETE /results/1
   def destroy
-    @result.destroy
+    if can? :destroy, Result
+      @result.destroy
+      render json: { message: 'Result deleted successfully'}
+    else
+      render json: { message: 'You are not authorized to delete a result' }, status: :unauthorized
+    end
   end
 
   private
